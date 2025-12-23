@@ -1,12 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-
-use App\Models\StatusSurat;
-use App\Models\Surat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Models\Customer;
+use App\Models\User;
+use App\Models\Project;
+use App\Helpers\DashboardHelper;
+
 
 class AppController extends Controller
 {
@@ -20,26 +22,31 @@ class AppController extends Controller
 
         $credentials = $request->validate([
             'username' => ['required'],
-            'password' => ['required', 'min:8']
+            'password' => ['required', 'min:3']
         ],[
             'username.required' => 'username tidak boleh kosong',
             'password.required' => 'password tidak boleh kosong',
-            'password.min' => 'password minimal 8 karakter',
+            'password.min' => 'password minimal 3 karakter',
         ]);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            $request->session()->put('success', 'Selamat Datang ' . ProfileController::getNama());
+            $request->session()->put('success', 'Selamat Datang ');
+
+            // ✅ KHUSUS CUSTOMER
+            if (strtolower($user->role) === 'customer') {
+                return redirect()->route('tracking'); 
+                // atau ->route('customer.timeline') kalau mau langsung timeline
+            }
+
             return redirect()->intended('dashboard');
         }
  
         return back()->withErrors([
-            'username' => 'The provided credentials do not match our records.',
+            'username' => 'Username atau password yang Anda masukkan salah.',
         ])->onlyInput('username');
-        
     }
-
 
     public function logout(Request $request): RedirectResponse
     {
@@ -52,30 +59,56 @@ class AppController extends Controller
         return redirect('/')->with('success', 'Semoga harimu menyenangkan');
     }
 
-    public function dashboard()
-    {
-        $data = [
-            'title' => 'Dashboard',
-            'jumlahSuratMasuk' => Surat::where('ditujukan', '=', Auth::user()->bagian->id)
-            ->orWhereHas('disposisiSekda', function ($query){ $query->where('ditujukan', Auth::user()->bagian->id);} )
-            ->orWhereHas('disposisiAsda', function ($query){ $query->where('ditujukan', Auth::user()->bagian->id);} )
-            ->orWhereHas('kartuDisposisi', function ($query){ $query->where('ditujukan', Auth::user()->bagian->id);} )->count(),
-            'jumlahSuratKeluar' => Surat::where('bagian_id', Auth::user()->bagian->id)->count()
-        ];
-        return view('dashboard', $data);
-    }
+public function dashboard()
+{
+    $user = Auth::user(); // otomatis ambil user yang login
 
-    public function suratDetail($id)
-    {
-        $surat = Surat::where('id', $id)
-                 ->firstOrFail();
-        $data = [
-            'title' => 'Detail Surat Masuk',
-            'status_surat' => StatusSurat::where('surat_id', '=', $id)->get(),
-            'surat' => $surat
-        ];
-
-        return view('surat_detail', $data);
+    // Kalau role-nya customer dan kamu mau ambil datanya dari tabel customer juga
+    if ($user->role === 'customer') {
+        $customer = Customer::find($user->customer_id);
+    } else {
+        $customer = null;
     }
+        //sementara saja, di taro sebelm semua punya dashboard masing2 
+        $summary = [
+        'jumlahPO' => 0,
+        'nilaiPO' => 0,
+        'target' => 0,
+        'achievement' => 0,
+        'bulan_list' => [],
+        'nilai_list' => []
+    ];
+    
+    $rekap = [];
+
+
+if(in_array(strtolower($user->role), ['superadmin', 'admin marketing', 'ceo',  'direktur', 'manager marketing', 'manager project', 'manager finance']))
+{
+    $summary = DashboardHelper::getMarketingSummary();
+}
+
+if(in_array(strtolower($user->role), ['admin 1', 'admin 2', 'ceo',  'direktur', 'manager marketing', 'manager project', 'manager finance']))
+{
+    $projects = DashboardHelper::getAllProjects();
+
+    $rekap = DashboardHelper::getProjectRekap($projects);
+    // dd($rekap);
+}
+    return view('dashboard', [
+        'title' => 'Dashboard',
+        'user' => $user,          // kirim data user login
+        'customer' => $customer,  // opsional kalau mau 
+
+        'jumlahPO' => $summary['jumlahPO'],
+        'nilaiPO' => $summary['nilaiPO'],
+        'targetBulanIni' => $summary['target'],
+        'persentaseAchieve' => $summary['achievement'],
+        'bulan' => $summary['bulan_list'],
+        'nilaiPerBulan' => $summary['nilai_list'],
+
+        'rekap' => $rekap,
+    ]);
+}
+
     
 }

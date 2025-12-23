@@ -19,7 +19,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $guarded = ['id'];
+     protected $guarded = ['id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -44,14 +44,8 @@ class User extends Authenticatable
         ];
     }
 
-    public function bagian() : BelongsTo
-    {
-        return $this->belongsTo(Bagian::class, 'bagian_id', 'id');
-    }
-
-    public function profile(): HasOne
-    {
-        return $this->hasOne(Profile::class, 'user_id', 'id');
+    public function customer() {
+    return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
     
 }

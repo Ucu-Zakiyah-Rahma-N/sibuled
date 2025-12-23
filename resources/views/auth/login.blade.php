@@ -25,7 +25,7 @@
             <div class="card mb-0">
               <div class="card-body">
                 <a href="{{ url('/') }}" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                  <img src="{{ asset('assets/images/karawang.svg') }}" width="350" alt="">
+                  <img src="{{ asset('assets/images/isimply.png') }}" width="250" alt="">
                 </a>
                 <form action="{{ url('auth') }}" method="POST">
                 @csrf

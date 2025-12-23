@@ -108,6 +108,7 @@
                     <th>Nomor Surat</th>
                     <th>Tipe Surat</th>
                     <th>Perihal</th>
+                    <th>Sifat</th>
                     <th>Pengirim</th>
                     <th>Status</th>
                     <th>Aksi</th>
@@ -131,6 +132,7 @@
                             <td>{{ $value->nomor }}</td>
                             <td>{{ $value->tipe }}</td>
                             <td>{{ $value->perihal }}</td>
+                            <td>{!! $value->badge_sifat !!}</td>
                             <td>{{ $value->pengirim->nama_bagian }}</td>
                             <td><span class="badge rounded-pill text-bg-{{ $value->statusTerakhir->color }}">{{ $value->statusTerakhir->status }}</span></td>
                             <td>

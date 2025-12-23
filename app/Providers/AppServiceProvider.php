@@ -6,6 +6,8 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,28 +24,35 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::if('admin', function () {
+            if (!Auth::check()) return false;
+
+            $role = strtolower(trim(Auth::user()->role));
+            return in_array($role, ['admin 1', 'admin 2']);
+        });
+
 
         Paginator::useBootstrap();
 
-        View::composer('*', function ($view) {
-        $jumlahSuratUmum = \App\Models\Surat::where('tgl_diterima', '=',null)
-            ->where('ditujukan','=', Auth::user()?->bagian_id)
-            ->count();
-        $jumlahDisposisiSekda = \App\Models\LembarDisposisiSekda::where('tgl_diterima', '=',null)
-            ->where('ditujukan','=', Auth::user()?->bagian_id)
-            ->count();
-        $jumlahDisposisiAsda = \App\Models\LembarDisposisiAsda::where('tgl_diterima', '=',null)
-            ->where('ditujukan','=', Auth::user()?->bagian_id)
-            ->count();
-        $jumlahKartuDisposisi = \App\Models\KartuDisposisi::where('tgl_diterima_asda', '=',null)
-            ->where('ditujukan','=', Auth::user()?->bagian_id)
-            ->count();
+        // View::composer('*', function ($view) {
+        // $jumlahSuratUmum = \App\Models\Surat::where('tgl_diterima', '=',null)
+        //     ->where('ditujukan','=', Auth::user()?->bagian_id)
+        //     ->count();
+        // $jumlahDisposisiSekda = \App\Models\LembarDisposisiSekda::where('tgl_diterima', '=',null)
+        //     ->where('ditujukan','=', Auth::user()?->bagian_id)
+        //     ->count();
+        // $jumlahDisposisiAsda = \App\Models\LembarDisposisiAsda::where('tgl_diterima', '=',null)
+        //     ->where('ditujukan','=', Auth::user()?->bagian_id)
+        //     ->count();
+        // $jumlahKartuDisposisi = \App\Models\KartuDisposisi::where('tgl_diterima_asda', '=',null)
+        //     ->where('ditujukan','=', Auth::user()?->bagian_id)
+        //     ->count();
 
-        $view->with('smbd', $jumlahSuratUmum);
-        $view->with('jds', $jumlahDisposisiSekda);
-        $view->with('jda', $jumlahDisposisiAsda);
-        $view->with('jkd', $jumlahKartuDisposisi);
+        // $view->with('smbd', $jumlahSuratUmum);
+        // $view->with('jds', $jumlahDisposisiSekda);
+        // $view->with('jda', $jumlahDisposisiAsda);
+        // $view->with('jkd', $jumlahKartuDisposisi);
 
-        });
+        // });
     }
 }
